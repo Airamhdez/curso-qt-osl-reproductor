@@ -9,8 +9,30 @@ MainWindow::MainWindow(QWidget *parent) :
     wgtMain_->setLayout(lytMain_);
     setCentralWidget(wgtMain_);
 
+    //Creamos las opciones del menu
+    mainMenu_ = new QMenuBar(this);
+    mnuArchivo_ = new QMenu(tr("&Archivo"), this);
+    mainMenu_->addMenu(mnuArchivo_);
+    mnuAyuda_ = new QMenu(tr("&Ayuda"), this);
+    mainMenu_->addMenu(mnuAyuda_);
+    mnuVer_ = new QMenu(tr("&Ver"), this);
+    mainMenu_->addMenu(mnuVer_);
+
+    //con esto colocamos correctamente el menú para que se muestre bien
+    setMenuBar(mainMenu_);
+    //instanciamos y asociamos las acciones
+    actArchivoAbrir_ = new QAction(tr("&Abrir"), this);
+    //añadimos un atajo de teclado para la opción abrir
+    actArchivoAbrir_->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_O));
+    mnuArchivo_->addAction(actArchivoAbrir_);
+    actAyudaAcercaDe_ = new QAction(tr("&Acerca de"), this);
+    mnuAyuda_->addAction(actAyudaAcercaDe_);
+    actMetadatos_ = new QAction(tr("&Metadatos"), this);
+    mnuVer_->addAction(actMetadatos_);
+
     //Initialize widgets
     mediaPlayer_  = new QMediaPlayer(this);
+    //slider horizontal para avanzar y retroceder en el video
     playerSlider_ = new QSlider(Qt::Horizontal, this);
     videoWidget_  = new QVideoWidget(this);
     volumeSlider_ = new QSlider(Qt::Horizontal, this);
@@ -28,7 +50,8 @@ MainWindow::MainWindow(QWidget *parent) :
     volumeSlider_->setSliderPosition(100);
 
     //Populate grid layout
-    lytMain_->addWidget(videoWidget_,  0, 0, 1, 5);
+    lytMain_->addWidget(videoWidget_,  0, 0, 1, 5);//colocamos en el grid los elementos
+    //los números no son pixeles sino celdas
     lytMain_->addWidget(playerSlider_, 1, 0, 1, 5);
     lytMain_->addWidget(btnOpen_,      2, 0, 1, 1);
     lytMain_->addWidget(btnPlay_,      2, 1, 1, 1);
@@ -51,6 +74,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(mediaPlayer_,  SIGNAL(durationChanged(qint64)), this,         SLOT(onDurationChanged(qint64)));
     connect(mediaPlayer_,  SIGNAL(positionChanged(qint64)), this,         SLOT(onPositionChanged(qint64)));
     connect(volumeSlider_, SIGNAL(sliderMoved(int)),        this,         SLOT(onVolumeChanged(int)));
+    connect(actArchivoAbrir_, SIGNAL(triggered()), this, SLOT(onOpen()));
+    connect(actAyudaAcercaDe_, SIGNAL(triggered()), this, SLOT(alAcercaDe()));
+    connect(actMetadatos_, SIGNAL(triggered()), this, SLOT(alMetadatos()));
 }
 
 MainWindow::~MainWindow()
@@ -75,6 +101,8 @@ void MainWindow::onSeek()
 
 void MainWindow::onDurationChanged(qint64 duration)
 {
+    //si la duracion del video cambia, es decir abrimos otros video con duracion distinta
+    //volvemos a establecer el rango del slider
     playerSlider_->setRange(0, duration);
 }
 
@@ -86,4 +114,16 @@ void MainWindow::onPositionChanged(qint64 position)
 void MainWindow::onVolumeChanged(int volume)
 {
     mediaPlayer_->setVolume(volume);
+}
+
+void MainWindow::alAcercaDe()
+{
+    Mensaje msj("Reproductor multimedia creado por Airam Hernandez Sacramento", this);
+    msj.exec();
+}
+
+void MainWindow::alMetadatos()
+{
+    MetadataDialog mdatos(mediaPlayer_, this);
+    mdatos.exec();
 }
